@@ -96,6 +96,24 @@ impl<const N: usize> fstr<N> {
       t
     }//const_make
 
+    pub const fn const_create_from_str_slices(strs: &[&str]) -> fstr<N> {
+        let mut result = fstr::<N>::new();
+        let mut position =  0;
+        let mut remaining = strs;
+        while let [current, tail @ ..] = remaining {
+            let current_bytes = current.as_bytes();
+            let mut i = 0;
+            while i < current_bytes.len() {
+                result.chrs[position] = current_bytes[i];
+                position += 1;
+                i += 1;
+            }
+            remaining = tail;
+        }
+        result.len = position;
+        result
+    }
+
     /// version of `const_create` that does not truncate.
     pub const fn const_try_create(s:&str) -> Result<fstr<N>, &str> {
       if s.len()+1>N { Err(s) }
@@ -154,6 +172,11 @@ impl<const N: usize> fstr<N> {
     pub fn to_str(&self) -> &str {
         unsafe { std::str::from_utf8_unchecked(&self.chrs[0..self.len]) }
     }
+
+    pub const fn to_ptr(&'static self) -> *const u8 {
+        self.chrs.as_ptr()
+    }
+
     /// same functionality as [fstr::to_str], but using [std::str::from_utf8]
     /// and may technically panic.
     pub fn as_str(&self) -> &str //{self.to_str()}
