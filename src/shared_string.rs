@@ -40,7 +40,7 @@ use core::cell::RefCell;
 /// checker.  Use with caution.
 /// Example:
 /// ```
-///  # use fixedstr::*;
+///  # use fixedstr_ext::*;
 ///  let mut a = Sharedstr::<8>::from("abc12");
 ///  let mut b = a.clone();
 ///  b.push('3');
@@ -117,8 +117,7 @@ impl<const N: usize> Sharedstr<N> {
     }
 
     /// version of [Flexstr::as_str] that does not call `unwrap`
-    pub fn as_str_utf8(&self) -> Result<&str,core::str::Utf8Error>
-    {
+    pub fn as_str_utf8(&self) -> Result<&str, core::str::Utf8Error> {
         unsafe {
             match self.inner.as_ptr().as_ref().unwrap() {
                 fixed(s) => s.as_str_safe(),
@@ -126,7 +125,7 @@ impl<const N: usize> Sharedstr<N> {
             } //match
         } //unsafe
     }
- 
+
     /// creates an empty string, equivalent to [Sharedstr::default]
     pub fn new() -> Self {
         Self::default()
@@ -151,7 +150,7 @@ impl<const N: usize> Sharedstr<N> {
     /// be used in conjunction with one of the public aliases [str4]-[str256].
     /// For example,
     /// ```
-    ///   # use fixedstr::*;
+    ///   # use fixedstr_ext::*;
     ///   let s = Sharedstr::<8>::from("abcd");
     ///   let t:str8 = s.get_str().unwrap();
     /// ```
@@ -461,7 +460,7 @@ impl<const N: usize> Sharedstr<N> {
     /// contain the extra bytes that does not fit.  Example:
     ///
     /// ```
-    ///  # use fixedstr::*;
+    ///  # use fixedstr_ext::*;
     ///   let mut fs:Sharedstr<4> = Sharedstr::from("abcdefg");
     ///   let extras = fs.split_off();
     ///   assert!( &fs=="abc" && &extras=="defg" && fs.is_fixed());
@@ -723,7 +722,7 @@ impl<const M: usize> Sharedstr<M> {
     /// returns a copy/clone of the string with new fixed capacity N.
     /// Example:
     /// ```
-    ///  # use fixedstr::Sharedstr;
+    ///  # use fixedstr_ext::Sharedstr;
     ///  let mut a:Sharedstr<4> = Sharedstr::from("ab");
     ///  let mut b:Sharedstr<8> = a.resize();
     ///  b.push_str("cdef");

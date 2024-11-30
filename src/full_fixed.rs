@@ -78,35 +78,42 @@ impl<const N: usize> fstr<N> {
         }
     }
 
-/// const constructor, to be called from const contexts.  However, as
-/// const constructors are restricted from using iterators, it's slightly
-/// better to call the non-const constructors in non-const contexts.
-/// Truncates automatically.
-    pub const fn const_create(s:&str) -> fstr<N> {
-      let mut t = fstr::<N>::new();
-      let mut len = s.len();
-      if len>N { len = N; } // fix max length
-      t.len = len;
-      let bytes = s.as_bytes();
-      let mut i = 0;
-      while i<len {
-        t.chrs[i] = bytes[i];
-        i += 1;
-      }
-      t
-    }//const_make
+    /// const constructor, to be called from const contexts.  However, as
+    /// const constructors are restricted from using iterators, it's slightly
+    /// better to call the non-const constructors in non-const contexts.
+    /// Truncates automatically.
+    pub const fn const_create(s: &str) -> fstr<N> {
+        let mut t = fstr::<N>::new();
+        let mut len = s.len();
+        if len > N {
+            len = N;
+        } // fix max length
+        t.len = len;
+        let bytes = s.as_bytes();
+        let mut i = 0;
+        while i < len {
+            t.chrs[i] = bytes[i];
+            i += 1;
+        }
+        t
+    } //const_make
 
-    pub const fn const_create_from_str_slices(strs: &[&str]) -> fstr<N> {
+    /// Create a `fstr<N>` from a slice of `&str`s. If the total length exceeds capacity N,
+    /// the remaining strings are ignored.
+    pub const fn const_create_from_str_slice(strs: &[&str]) -> fstr<N> {
         let mut result = fstr::<N>::new();
-        let mut position =  0;
+        let mut position = 0;
         let mut remaining = strs;
         while let [current, tail @ ..] = remaining {
             let current_bytes = current.as_bytes();
             let mut i = 0;
-            while i < current_bytes.len() {
+            while i < current_bytes.len() && position < N {
                 result.chrs[position] = current_bytes[i];
                 position += 1;
                 i += 1;
+            }
+            if position >= N {
+                break;
             }
             remaining = tail;
         }
@@ -115,20 +122,23 @@ impl<const N: usize> fstr<N> {
     }
 
     /// version of `const_create` that does not truncate.
-    pub const fn const_try_create(s:&str) -> Result<fstr<N>, &str> {
-      if s.len()+1>N { Err(s) }
-      else { Ok(fstr::const_create(s)) }
+    pub const fn const_try_create(s: &str) -> Result<fstr<N>, &str> {
+        if s.len() + 1 > N {
+            Err(s)
+        } else {
+            Ok(fstr::const_create(s))
+        }
     }
-    
+
     /// creates an empty string, equivalent to fstr::default() but can also be
     /// called from a const context
     #[inline]
     pub const fn new() -> fstr<N> {
         fstr {
-          chrs:[0;N],
-          len: 0,
+            chrs: [0; N],
+            len: 0,
         }
-    }//new
+    } //new
 
     /// length of the string in bytes, which will be up to the maximum size N.
     /// This is a constant-time operation and can be called from a const
@@ -173,6 +183,9 @@ impl<const N: usize> fstr<N> {
         unsafe { std::str::from_utf8_unchecked(&self.chrs[0..self.len]) }
     }
 
+    /// Return a `*const u8` to internal buffer.
+    ///
+    /// Mainly used in const context.
     pub const fn to_ptr(&'static self) -> *const u8 {
         self.chrs.as_ptr()
     }
@@ -184,12 +197,10 @@ impl<const N: usize> fstr<N> {
         std::str::from_utf8(&self.chrs[0..self.len]).unwrap()
     }
 
-
     /// version of [fstr::as_str] that does not call `unwrap`
-    pub fn as_str_safe(&self) -> Result<&str,core::str::Utf8Error> {
+    pub fn as_str_safe(&self) -> Result<&str, core::str::Utf8Error> {
         core::str::from_utf8(&self.chrs[0..self.len])
     }
- 
 
     /// changes a character at character position i to c.  This function
     /// requires that c is in the same character class (ascii or unicode)
@@ -615,7 +626,7 @@ impl<const N: usize> fstr<N> {
 ////////////// core::fmt::Write trait
 /// Usage:
 /// ```
-///   use fixedstr::*;
+///   use fixedstr_ext::*;
 ///   use std::fmt::Write;
 ///   let mut s = fstr::<32>::new();
 ///   let result = write!(&mut s,"hello {}, {}, {}",1,2,3);
@@ -687,5 +698,20 @@ impl<const N: usize> core::str::FromStr for fstr<N> {
         } else {
             Err("capacity exceeded")
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::fstr;
+
+    #[test]
+    fn test_create_fstr_from_str_slice_success() {
+        let slice = &["12", "34", "567"];
+        let _: fstr<8> = fstr::const_create_from_str_slice(slice);
+        let slice = &["12", "34", "5678"];
+        let _: fstr<8> = fstr::const_create_from_str_slice(slice);
+        let slice = &["12", "34", "5678", "90000000"];
+        let _: fstr<8> = fstr::const_create_from_str_slice(slice);
     }
 }

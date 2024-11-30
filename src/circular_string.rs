@@ -34,7 +34,7 @@ use core::ops::Add;
 ///
 /// Examples:
 /// ```
-///  # use fixedstr::*;
+///  # use fixedstr_ext::*;
 ///  let mut cb = cstr::<16>::make("abc123");
 ///  cb.push_str("xyz");
 ///  cb.push_front("9876");
@@ -145,29 +145,34 @@ impl<const N: usize> cstr<N> {
         Some(m)
     } //from_pair
 
-/// const constructor, to be called from const contexts.  However, as
-/// const constructors are restricted from using iterators, it's slightly
-/// better to call the non-const constructors in non-const contexts.
-/// Truncates automatically.
+    /// const constructor, to be called from const contexts.  However, as
+    /// const constructors are restricted from using iterators, it's slightly
+    /// better to call the non-const constructors in non-const contexts.
+    /// Truncates automatically.
     pub const fn const_make(src: &str) -> cstr<N> {
         let mut m = cstr::<N>::new();
         let mut len = src.len();
-        if len>N {len=N;}
+        if len > N {
+            len = N;
+        }
         //m.chrs[..length].copy_from_slice(&src.as_bytes()[..length]);
         let bytes = src.as_bytes();
         let mut i = 0;
-        while i<len {
-          m.chrs[i] = bytes[i];
-          i += 1;
+        while i < len {
+            m.chrs[i] = bytes[i];
+            i += 1;
         }
         m.len = len as u16;
         m
-    }// const_make
+    } // const_make
 
     /// version of `const_make` that does not truncate.
-    pub const fn const_try_make(s:&str) ->  Result<cstr<N>, &str> {
-      if s.len()>N || N<1 || N>65535 {Err(s)}
-      else { Ok(cstr::const_make(s)) }
+    pub const fn const_try_make(s: &str) -> Result<cstr<N>, &str> {
+        if s.len() > N || N < 1 || N > 65535 {
+            Err(s)
+        } else {
+            Ok(cstr::const_make(s))
+        }
     }
 
     /// checks if the underlying representation of the string is contiguous

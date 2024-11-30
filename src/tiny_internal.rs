@@ -35,7 +35,6 @@ use core::cmp::{min, Ordering};
 use core::ops::{Add, Index, IndexMut, Range, RangeFrom, RangeFull, RangeTo};
 use core::ops::{RangeInclusive, RangeToInclusive};
 
-
 /// **This structure is normally only accessible through the
 /// public types [str4] through [str256].**  These types alias internal
 /// types [tstr]\<4\> through [tstr]\<256\> respectively.  The purpose here
@@ -48,7 +47,7 @@ use core::ops::{RangeInclusive, RangeToInclusive};
 /// strings by generating higher-capacity types. Concatenating two strN
 /// strings will always generate a strM with M=2*N, for str4 - str128.
 /// ```
-///   # use fixedstr::*;
+///   # use fixedstr_ext::*;
 ///   let a = str8::from("aaaaaa");
 ///   let b = str8::from("bbbbbb");
 ///   let c = a + b;  // type of c will be str16
@@ -58,7 +57,7 @@ use core::ops::{RangeInclusive, RangeToInclusive};
 /// In contrast, concatenating other string types such as zstr will always
 /// produce strings of the same type and capacity.
 #[derive(Copy, Clone, Eq)]
-pub struct tstr<const N:usize = 256> {
+pub struct tstr<const N: usize = 256> {
     chrs: [u8; N],
 } //tstr
 impl<const N: usize> tstr<N> {
@@ -96,47 +95,50 @@ impl<const N: usize> tstr<N> {
     /// version of make that returns the original string slice in an `Err(_)` if
     /// truncation is requried, or in an `Ok(_)` if no truncation is required
     pub fn try_make(s: &str) -> Result<tstr<N>, &str> {
-        if s.len()+1 > N {
+        if s.len() + 1 > N {
             Err(s)
         } else {
             Ok(tstr::make(s))
         }
     }
 
-/// const constructor, to be called from const contexts.  However, as
-/// const functions are restricted from using iterators, it's slightly
-/// better to call the non-const constructors in non-const contexts.
-/// Truncates automatically.
-    pub const fn const_make(s:&str) -> tstr<N> {
-      let mut t = tstr::<N>::new();
-      let mut len = s.len();
-      if len>N-1 { len = N-1; } // fix max length
-      t.chrs[0] = len as u8;
-      let bytes = s.as_bytes();
-      let mut i = 0;
-      while i<len {
-        t.chrs[i+1] = bytes[i];
-        i += 1;
-      }
-      t
-    }//const_make
+    /// const constructor, to be called from const contexts.  However, as
+    /// const functions are restricted from using iterators, it's slightly
+    /// better to call the non-const constructors in non-const contexts.
+    /// Truncates automatically.
+    pub const fn const_make(s: &str) -> tstr<N> {
+        let mut t = tstr::<N>::new();
+        let mut len = s.len();
+        if len > N - 1 {
+            len = N - 1;
+        } // fix max length
+        t.chrs[0] = len as u8;
+        let bytes = s.as_bytes();
+        let mut i = 0;
+        while i < len {
+            t.chrs[i + 1] = bytes[i];
+            i += 1;
+        }
+        t
+    } //const_make
 
     /// Version of `const_make` that does not truncate.
     /// Additionally, because this operation is meant to be evaluated at
     /// compile time, N is checked to be at least 1 and at most 256: `None`
     /// is returned if conditions are violated.
-    pub const fn const_try_make(s:&str) -> Option<tstr<N>> {
-      if N==0 || N>256 || s.len()+1>N {None}
-      else { Some(tstr::const_make(s)) }
+    pub const fn const_try_make(s: &str) -> Option<tstr<N>> {
+        if N == 0 || N > 256 || s.len() + 1 > N {
+            None
+        } else {
+            Some(tstr::const_make(s))
+        }
     }
-    
+
     /// creates an empty string; equivalent to tstr::default() but can
     /// also be called from a const context.
     #[inline]
     pub const fn new() -> tstr<N> {
-        tstr {
-          chrs : [0;N]
-        }
+        tstr { chrs: [0; N] }
     }
 
     /// length of the string in bytes (consistent with [str::len]). This
@@ -166,9 +168,9 @@ impl<const N: usize> tstr<N> {
 
     /// returns slice of u8 the array underneath the tstr
     pub fn as_bytes(&self) -> &[u8] {
-        &self.chrs[1..self.len()+1]
+        &self.chrs[1..self.len() + 1]
     }
-   
+
     /// returns mutable slice of the u8 array underneath (use with care)
     pub fn as_bytes_mut(&mut self) -> &mut [u8] {
         let n = self.len() + 1;
@@ -184,8 +186,8 @@ impl<const N: usize> tstr<N> {
         core::str::from_utf8(&self.chrs[1..self.len() + 1]).unwrap()
     }
     /// version of [tstr::as_str] that does not call `unwrap`
-    pub fn as_str_safe(&self) -> Result<&str,core::str::Utf8Error> {
-        core::str::from_utf8(&self.chrs[1..self.len() + 1])    
+    pub fn as_str_safe(&self) -> Result<&str, core::str::Utf8Error> {
+        core::str::from_utf8(&self.chrs[1..self.len() + 1])
     }
 
     /// changes a character at *character position* i to c.  This function
@@ -408,22 +410,20 @@ impl<const N: usize> tstr<N> {
         Ok(s)
     } //from_utf16
 
-
-/*
-   // These functions will replace calls to to_str (internal)
-   // ... but both are unsafe because of unwrap
-   #[cfg(not(feature = "prioritize-safety"))]
-   #[inline(always)]
-   fn makestr(&self) -> &str {
-     unsafe { core::str::from_utf8_unchecked(&self.chrs[1..self.len() + 1]) }
-  }
-   #[cfg(feature = "prioritize-safety")]
-   #[inline(always)]
-   fn makestr(&self) -> &str {
-     core::str::from_utf8(&self.chrs[1..self.len() + 1]).unwrap()
-   }
-*/
- 
+    /*
+       // These functions will replace calls to to_str (internal)
+       // ... but both are unsafe because of unwrap
+       #[cfg(not(feature = "prioritize-safety"))]
+       #[inline(always)]
+       fn makestr(&self) -> &str {
+         unsafe { core::str::from_utf8_unchecked(&self.chrs[1..self.len() + 1]) }
+      }
+       #[cfg(feature = "prioritize-safety")]
+       #[inline(always)]
+       fn makestr(&self) -> &str {
+         core::str::from_utf8(&self.chrs[1..self.len() + 1]).unwrap()
+       }
+    */
 } //impl tstr<N>
   ///////////////////////
 
@@ -784,7 +784,7 @@ impl<const N: usize> Add<tstr<N>> for &str {
 ////////////// core::fmt::Write trait
 /// Usage:
 /// ```
-///   # use fixedstr::*;
+///   # use fixedstr_ext::*;
 ///   use core::fmt::Write;
 ///   let mut s = str16::new();
 ///   let result = write!(&mut s,"hello {}, {}, {}",1,2,3);
@@ -828,18 +828,20 @@ impl<const N: usize> core::str::FromStr for tstr<N> {
 /// Can be called when tstr is created (under `pub-tstr` feature):
 /// ```
 ///   #[cfg(feature = "pub-tstr")]
-///   # use fixedstr::*;
+///   # use fixedstr_ext::*;
 ///   let ls = tstr::<{tstr_limit(258)}>::from("abcd");
 ///   assert_eq!(ls.capacity(),255);
 /// ```
 #[cfg(feature = "pub-tstr")]
-pub const fn tstr_limit(n:usize) -> usize {
-  if n==0 {1}
-  else if n>256 {256}
-  else {n}
-}//const limit_size
-
-
+pub const fn tstr_limit(n: usize) -> usize {
+    if n == 0 {
+        1
+    } else if n > 256 {
+        256
+    } else {
+        n
+    }
+} //const limit_size
 
 /*   cannot adopt, because it affects type inference of s1 == s2.resize()
 impl<const N: usize, const M:usize> core::cmp::PartialEq<tstr<M>> for tstr<N> {

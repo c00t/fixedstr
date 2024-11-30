@@ -1,3 +1,8 @@
+
+**Fork Updates**
+Forked from [fixedstr](https://github.com/chuckcscccl/fixedstr/), add `const_create_from_str_slice` `to_ptr` to `fstr` to be
+used inside const context.
+
 Library for several alternative string types using const generics.
 Most types can be copied and stack-allocated.  Certain types such as
 `zstr<8>` and `str8` are smaller in size than a &str on typical

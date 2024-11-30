@@ -169,7 +169,7 @@
 //!  ## Examples
 //!
 //!```
-//! use fixedstr::*;
+//! use fixedstr_ext::*;
 //! let a = str8::from("abcdefg"); //creates new string from &str
 //! let a1 = a; // copied, not moved
 //! let a2:&str = a.to_str();
@@ -291,84 +291,84 @@ mod compressed;
 pub use compressed::*;
 */
 
-
 //////// Unifying Trait Approach
 #[cfg(feature = "experimental")]
-pub trait Fixedstr<const N:usize> {
-  type Target;
-  
-  fn make<TA : AsRef<str>>(s:TA) -> Self::Target;
-  
-  fn create<TA : AsRef<str>>(s:TA) -> Self::Target {
-    Self::make(s)
-  } // won't compile
-  fn try_make<TA:AsRef<str>>(s:TA) -> Result<Self::Target,TA> {
-    if s.as_ref().len()<N {Ok(Self::make(s))} else {Err(s)}
-  }
+pub trait Fixedstr<const N: usize> {
+    type Target;
 
-  /*const*/ fn const_make(s:&str) -> Self::Target;
-  /*const*/ fn const_try_make(s:&str) -> Option<Self::Target>;
+    fn make<TA: AsRef<str>>(s: TA) -> Self::Target;
 
-  fn new() -> Self::Target {
-    Self::make("")
-  }
+    fn create<TA: AsRef<str>>(s: TA) -> Self::Target {
+        Self::make(s)
+    } // won't compile
+    fn try_make<TA: AsRef<str>>(s: TA) -> Result<Self::Target, TA> {
+        if s.as_ref().len() < N {
+            Ok(Self::make(s))
+        } else {
+            Err(s)
+        }
+    }
 
-  /*const*/ fn len(&self) -> usize;
-  fn charlen(&self) -> usize;
-  /*const*/ fn capacity(&self) -> usize { N-1 }
+    /*const*/
+    fn const_make(s: &str) -> Self::Target;
+    /*const*/
+    fn const_try_make(s: &str) -> Option<Self::Target>;
 
-  fn to_str(&self) -> &str;
-  fn as_str(&self) -> &str;
-  
-  #[cfg(not(feature = "no-alloc"))]
-  fn to_string(&self) -> alloc::string::String {
+    fn new() -> Self::Target {
+        Self::make("")
+    }
+
+    /*const*/
+    fn len(&self) -> usize;
+    fn charlen(&self) -> usize;
+    /*const*/
+    fn capacity(&self) -> usize {
+        N - 1
+    }
+
+    fn to_str(&self) -> &str;
+    fn as_str(&self) -> &str;
+
+    #[cfg(not(feature = "no-alloc"))]
+    fn to_string(&self) -> alloc::string::String {
         alloc::string::String::from(self.to_str())
-  }
+    }
 
-  fn set(&mut self, i: usize, c: char) -> bool;
+    fn set(&mut self, i: usize, c: char) -> bool;
 
-  fn push_str<'t>(&mut self, src: &'t str) -> &'t str;
-  
-  fn push_char(&mut self, c: char) -> bool;
+    fn push_str<'t>(&mut self, src: &'t str) -> &'t str;
 
-  fn pop_char(&mut self) -> Option<char>;
-  
-  fn nth(&self, n: usize) -> Option<char>;
-  
-  fn nth_bytechar(&self, n: usize) -> char;
-  
-  fn truncate(&mut self, n: usize);
-  
-  fn truncate_bytes(&mut self, n: usize);
+    fn push_char(&mut self, c: char) -> bool;
 
-  fn truncate_unchecked(&mut self, n: usize);
-  
-  fn clear(&mut self);
-  
-  fn right_ascii_trim(&mut self);
-  
-  fn make_ascii_lowercase(&mut self);
+    fn pop_char(&mut self) -> Option<char>;
 
-  fn make_ascii_uppercase(&mut self);
+    fn nth(&self, n: usize) -> Option<char>;
 
-  fn case_insensitive_eq<TA:AsRef<str>>(&self, other: TA) -> bool;
+    fn nth_bytechar(&self, n: usize) -> char;
 
-  fn is_ascii(&self) -> bool {
+    fn truncate(&mut self, n: usize);
+
+    fn truncate_bytes(&mut self, n: usize);
+
+    fn truncate_unchecked(&mut self, n: usize);
+
+    fn clear(&mut self);
+
+    fn right_ascii_trim(&mut self);
+
+    fn make_ascii_lowercase(&mut self);
+
+    fn make_ascii_uppercase(&mut self);
+
+    fn case_insensitive_eq<TA: AsRef<str>>(&self, other: TA) -> bool;
+
+    fn is_ascii(&self) -> bool {
         self.to_str().is_ascii()
-  }
-
-  
-}//trait Fixedstr
-
-
-
+    }
+} //trait Fixedstr
 
 //#[macro_use]
 //extern crate static_assertions;
-
-
-
-
 
 #[cfg(feature = "serde")]
 mod serde_support {
@@ -444,7 +444,7 @@ mod serde_support {
 ///
 /// Example:
 /// ```
-///  # use fixedstr::str8;
+///  # use fixedstr_ext::str8;
 ///  let mut s = str8::from("aλc");
 ///  assert_eq!(s.capacity(),7);
 ///  assert_eq!(s.push("1234567"), "4567");
@@ -475,7 +475,7 @@ pub type str128 = tstr<128>;
 /// two str8 strings will always concatenate to str16, and similarly for
 /// all other strN types up to str128.
 ///```
-///  # use fixedstr::*;
+///  # use fixedstr_ext::*;
 ///  let c1 = str8::from("abcd");
 ///  let c2 = str8::from("xyz");
 ///  let c3 = c1 + c2;
@@ -496,11 +496,10 @@ pub type str48 = tstr<48>;
 pub type str96 = tstr<96>;
 pub type str192 = tstr<192>;
 
-
 #[macro_export]
 /// creates a formated string of given type (by implementing [core::fmt::Write]):
 /// ```
-///    # use fixedstr::*;
+///    # use fixedstr_ext::*;
 ///    let s = str_format!(str8,"abc{}{}{}",1,2,3);
 ///    assert_eq!(s,"abc123");
 /// ```
@@ -518,7 +517,7 @@ macro_rules! str_format {
 #[macro_export]
 /// version of [str_format]! that returns an Option of the given type.
 /// ```
-///   # use fixedstr::*;
+///   # use fixedstr_ext::*;
 ///  let s = try_format!(str32,"abcdefg{}","hijklmnop").unwrap();
 ///  let s2 = try_format!(str8,"abcdefg{}","hijklmnop");
 ///  assert!(s2.is_none());
@@ -544,7 +543,7 @@ pub trait ToTstr<const N: usize> {
 /// into the specified type, similar to `to_string` but without necessary
 /// heap allocation.  Truncation is automatic and silent. Example:
 ///```
-///  # use fixedstr::*;
+///  # use fixedstr_ext::*;
 ///  let fs = to_fixedstr!(str8,-0132*2);
 ///  assert_eq!(&fs,"-264");
 ///```
@@ -561,7 +560,7 @@ macro_rules! to_fixedstr {
 #[macro_export]
 /// Version of [to_fixedstr!] that returns None instead of truncating .
 ///```
-///  # use fixedstr::*;
+///  # use fixedstr_ext::*;
 ///  let fsopt = convert_to_str!(zstr<16>,0.013128009);
 ///  assert!(matches!(fsopt.as_deref(),Some("0.013128009")))
 ///```
@@ -701,11 +700,11 @@ mod tests {
         assert_eq!(&fs, "-132");
 
         // testing for constants
-        const C:str16 = str16::const_make("abcd");
+        const C: str16 = str16::const_make("abcd");
         //const C:zstr<8> = zstr::const_make("abcd");
-        let xarray = [0u8;C.len()];
-        assert_eq!(C,"abcd");
-        assert_eq!(xarray.len(),4);
+        let xarray = [0u8; C.len()];
+        assert_eq!(C, "abcd");
+        assert_eq!(xarray.len(), 4);
 
         //cstr tests
         #[cfg(feature = "circular-str")]
@@ -883,7 +882,7 @@ mod tests {
     #[cfg(not(feature = "no-alloc"))]
     fn ftests() {
         extern crate std;
-        use std::{println, string::String, format};
+        use std::{format, println, string::String};
         let a: fstr<8> = fstr::from("abcdefg"); //creates fstr from &str
         let a1: fstr<8> = a; // copied, not moved
         let a2: &str = a.to_str();
@@ -917,10 +916,10 @@ mod tests {
         assert_eq!(ac, ac2);
 
         let mut z8 = zstr::<16>::from("abc12");
-        let z8o = str_format!(zstr<16>,"xxx {}3",z8);
+        let z8o = str_format!(zstr<16>, "xxx {}3", z8);
         assert_eq!(z8o, "xxx abc123");
-        let zoo = format!("xx{}yy",z8o);
-        assert_eq!(zoo,"xxxxx abc123yy");
+        let zoo = format!("xx{}yy", z8o);
+        assert_eq!(zoo, "xxxxx abc123yy");
     } //ftr tests
 
     #[cfg(all(feature = "std", feature = "flex-str"))]
@@ -1095,7 +1094,7 @@ mod tests {
 
     #[cfg(feature = "pub-tstr")]
     fn consttests() {
-       let ls = tstr::<{tstr_limit(258)}>::from("abcd");
-       assert_eq!(ls.capacity(),255);
-    }//consttests
+        let ls = tstr::<{ tstr_limit(258) }>::from("abcd");
+        assert_eq!(ls.capacity(), 255);
+    } //consttests
 } //tests mod

@@ -157,14 +157,12 @@ impl<const N: usize> Flexstr<N> {
     }
 
     /// version of [Flexstr::as_str] that does not call `unwrap`
-    pub fn as_str_safe(&self) -> Result<&str,core::str::Utf8Error>
-    {
+    pub fn as_str_safe(&self) -> Result<&str, core::str::Utf8Error> {
         match &self.inner {
             fixed(s) => s.as_str_safe(),
             owned(s) => Ok(&s[..]),
         } //match
     }
-    
 
     /// retrieves a copy of the underlying fixed string, if it is a fixed string.
     /// Note that since the `tstr` type is not exported, this function should
@@ -236,8 +234,8 @@ impl<const N: usize> Flexstr<N> {
         } //match
     }
 
-   /// returns mutable u8-slice of string underneath.  Function requires
-   /// call to [String::as_mut_str] and is therefore marked unsafe.
+    /// returns mutable u8-slice of string underneath.  Function requires
+    /// call to [String::as_mut_str] and is therefore marked unsafe.
     pub unsafe fn as_bytes_mut(&mut self) -> &mut [u8] {
         match &mut self.inner {
             fixed(f) => f.as_bytes_mut(),
@@ -457,7 +455,7 @@ impl<const N: usize> Flexstr<N> {
     /// contain the extra bytes that does not fit.  Example:
     ///
     /// ```
-    ///  # use fixedstr::*;
+    ///  # use fixedstr_ext::*;
     ///   let mut fs:Flexstr<4> = Flexstr::from("abcdefg");
     ///   let extras = fs.split_off();
     ///   assert!( &fs=="abc" && &extras=="defg" && fs.is_fixed());
@@ -665,7 +663,7 @@ impl<const M: usize> Flexstr<M> {
     /// returns a copy/clone of the string with new fixed capacity N.
     /// Example:
     /// ```
-    ///  # use fixedstr::Flexstr;
+    ///  # use fixedstr_ext::Flexstr;
     ///  let mut a:Flexstr<4> = Flexstr::from("ab");
     ///  let mut b:Flexstr<8> = a.resize();
     ///  b.push_str("cdef");

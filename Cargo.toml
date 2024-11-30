@@ -1,11 +1,11 @@
 [package]
-name = "fixedstr"
+name = "fixedstr-ext"
 version = "0.5.8"
-authors = ["Chuck Liang"]
+authors = ["Chuck Liang", "cupofc0t <cupofc0t@gmail.com>"]
 edition = "2021"
 license = "MIT"
-description = "strings of constant maximum size that can be copied and stack allocated using const generics"
-repository = "https://github.com/chuckcscccl/fixedstr/"
+description = "A fork of fixedstr, which add more const functions to it."
+repository = "https://github.com/c00t/fixedstr/"
 keywords = ["string","no-std"]
 
 

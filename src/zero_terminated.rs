@@ -78,32 +78,35 @@ impl<const N: usize> zstr<N> {
     /// creates an empty string, equivalent to zstr::default() but can also
     /// be called in a const context
     pub const fn new() -> zstr<N> {
-        zstr {
-          chrs: [0;N]
-        }
+        zstr { chrs: [0; N] }
     }
 
-/// const constructor, to be called from const contexts.  However, as
-/// const constructors are restricted from using iterators, it's slightly
-/// better to call the non-const constructors in non-const contexts.
-/// Truncates automatically.
-    pub const fn const_make(s:&str) -> zstr<N> {
-      let mut t = zstr::<N>::new();
-      let mut len = s.len();
-      if len>N-1 { len = N-1; } // fix max length
-      let bytes = s.as_bytes();
-      let mut i = 0;
-      while i<len {
-        t.chrs[i] = bytes[i];
-        i += 1;
-      }
-      t
-    }//const_make
+    /// const constructor, to be called from const contexts.  However, as
+    /// const constructors are restricted from using iterators, it's slightly
+    /// better to call the non-const constructors in non-const contexts.
+    /// Truncates automatically.
+    pub const fn const_make(s: &str) -> zstr<N> {
+        let mut t = zstr::<N>::new();
+        let mut len = s.len();
+        if len > N - 1 {
+            len = N - 1;
+        } // fix max length
+        let bytes = s.as_bytes();
+        let mut i = 0;
+        while i < len {
+            t.chrs[i] = bytes[i];
+            i += 1;
+        }
+        t
+    } //const_make
 
     /// version of `const_make` that does not truncate.
-    pub const fn const_try_make(s:&str) -> Option<zstr<N>> {
-      if s.len()+1>N {None}
-      else { Some(zstr::const_make(s)) }
+    pub const fn const_try_make(s: &str) -> Option<zstr<N>> {
+        if s.len() + 1 > N {
+            None
+        } else {
+            Some(zstr::const_make(s))
+        }
     }
 
     /// const function that
@@ -190,7 +193,7 @@ impl<const N: usize> zstr<N> {
         let mut mid = 0;
         while min < max {
             //mid = (min + max) / 2;
-            mid = min + (max-min)/2;   // no overflow, just in case
+            mid = min + (max - min) / 2; // no overflow, just in case
             if self.chrs[mid] == 0 {
                 // go left
                 max = mid;
@@ -216,7 +219,7 @@ impl<const N: usize> zstr<N> {
 
     /// returns mutable slice of the u8 array underneath, including the terminating zero.  **WARNING:** changing a byte to zero in the middle of the string is not enough to zero-terminate the string: the length calculation via binary search will become invalid. All bytes following the first zero must also be zeroed.  Use with care.
     pub fn as_bytes_mut(&mut self) -> &mut [u8] {
-        let n = self.blen()+1;
+        let n = self.blen() + 1;
         &mut self.chrs[0..n]
     }
 
@@ -235,10 +238,9 @@ impl<const N: usize> zstr<N> {
         core::str::from_utf8(&self.chrs[0..self.blen()]).unwrap()
     }
     /// version of [zstr::as_str] that does not call `unwrap`
-    pub fn as_str_safe(&self) -> Result<&str,core::str::Utf8Error> {
+    pub fn as_str_safe(&self) -> Result<&str, core::str::Utf8Error> {
         core::str::from_utf8(&self.chrs[0..self.blen()])
     }
-    
 
     /// changes a character at *character position* i to c.  This function
     /// requires that c is in the same character class (ascii or unicode)
@@ -761,7 +763,7 @@ pub type ztr128 = zstr<128>;
 ////////////// core::fmt::Write trait
 /// Usage:
 /// ```
-///  # use fixedstr::*;
+///  # use fixedstr_ext::*;
 ///   use core::fmt::Write;
 ///   let mut s = zstr::<32>::new();
 ///   let result = write!(&mut s,"hello {}, {}, {}",1,2,3);
@@ -918,35 +920,35 @@ impl<const N: usize> core::str::FromStr for zstr<N> {
     }
 }
 
-
 /// Iterator over a [zstr]`<N>` in `CS`-size `&[u8]` slices,
 /// except for possibly the last slice.  The last slice may also be
 /// zero-terminated. 'CS' must be non-zero.
 #[cfg(feature = "experimental")]
-pub struct ChunkyIter<'t, const N:usize, const CS:usize> {
-  bur : &'t [u8;N],
-  index : usize,
+pub struct ChunkyIter<'t, const N: usize, const CS: usize> {
+    bur: &'t [u8; N],
+    index: usize,
 }
 #[cfg(feature = "experimental")]
-impl<'t, const N:usize, const CS:usize> Iterator for ChunkyIter<'t,N,CS> {
-  type Item = &'t [u8];
-  fn next(&mut self) -> Option<Self::Item> {
-    if CS==0 || self.index + 1 > N || self.bur[self.index]==0 { None }
-    else {
-       self.index += CS;
-       Some(&self.bur[self.index-CS .. min(N,self.index)])
-    }
-  }//next
+impl<'t, const N: usize, const CS: usize> Iterator for ChunkyIter<'t, N, CS> {
+    type Item = &'t [u8];
+    fn next(&mut self) -> Option<Self::Item> {
+        if CS == 0 || self.index + 1 > N || self.bur[self.index] == 0 {
+            None
+        } else {
+            self.index += CS;
+            Some(&self.bur[self.index - CS..min(N, self.index)])
+        }
+    } //next
 } // impl Iterator for ChunkyIter
 
 #[cfg(feature = "experimental")]
-impl<const N:usize> zstr<N> {
-  /// Creates a [ChunkyIter] iterator over `&[u8]` slices of fixed size `CS`,
-  /// except for the final slice, which may also be zero-terminated.
-  pub fn chunky_iter<'t,const CS:usize>(&'t self) -> ChunkyIter<'t,N,CS> {
-    ChunkyIter {
-      bur : &self.chrs,
-      index : 0,
-    }
-  }//chunk_iter
+impl<const N: usize> zstr<N> {
+    /// Creates a [ChunkyIter] iterator over `&[u8]` slices of fixed size `CS`,
+    /// except for the final slice, which may also be zero-terminated.
+    pub fn chunky_iter<'t, const CS: usize>(&'t self) -> ChunkyIter<'t, N, CS> {
+        ChunkyIter {
+            bur: &self.chrs,
+            index: 0,
+        }
+    } //chunk_iter
 }
